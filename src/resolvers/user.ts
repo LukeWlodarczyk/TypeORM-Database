@@ -1,26 +1,43 @@
+import { getConnection } from "typeorm";
 import { ResolverMap } from "../types/ResolverType";
+import { User } from '../entity/User';
 
 const resolvers: ResolverMap = {
   Query: {
-    hello: (_: any, { name }: any) => `hello ${name || "World"}`,
+    hello: (_, { name }) => `hello ${name || "World"}`,
     user: (_, { id }) => {
-      const a = id;
-      return a;
+      return getConnection()
+      .createQueryBuilder()
+      .select("user")
+      .from(User, "user")
+      .where("user.id = :id", { id })
+      .getOne();
     },
-    users: () => {}
+    users: () => User.find()
   },
   Mutation: {
-    createUser: (_, args) => {
-      const a = args;
-      return a;
-    },
+    createUser: (_, args) => User.create(args).save(),
     updateUser: async (_, { id, ...args }) => {
-      const a = [id, ...args];
-      return a;
+      try {
+        await User.update({ id }, args);
+        return true;
+      } catch (err) {
+        return false;
+      }
     },
     deleteUser: async (_, { id }) => {
-      const a = id;
-      return a;
+      try {
+        await getConnection()
+                .createQueryBuilder()
+                .delete()
+                .from(User)
+                .where("id = :id", { id })
+                .execute();
+        return true;
+      } catch (err) {
+        return false;
+      }
+      
     }
   }
 };
